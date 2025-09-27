@@ -1,0 +1,19 @@
+{
+  "name": "field-task-planner",
+  "version": "1.0.0",
+  "description": "Field Task Planner - Full Stack Application",
+  "main": "server/server.js",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "server": "cd server && node server.js",
+    "client": "cd client && npm start",
+    "install-all": "npm install && cd client && npm install && cd ../server && npm install",
+    "build": "cd client && npm run build"
+  },
+  "keywords": ["field", "task", "planner", "react", "node"],
+  "author": "Dominik",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.0"
+  }
+}

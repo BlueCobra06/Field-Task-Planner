@@ -1,0 +1,2 @@
+Get-Service | Where-Object {$_.Name -like "*postgres*"}
+Get-Service | Where-Object {$_.Name -like "*postgres*"}
