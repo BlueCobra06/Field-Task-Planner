@@ -10,10 +10,19 @@
     "install-all": "npm install && cd client && npm install && cd ../server && npm install",
     "build": "cd client && npm run build"
   },
-  "keywords": ["field", "task", "planner", "react", "node"],
+  "keywords": [
+    "field",
+    "task",
+    "planner",
+    "react",
+    "node"
+  ],
   "author": "Dominik",
   "license": "MIT",
   "devDependencies": {
     "concurrently": "^8.2.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2"
   }
 }

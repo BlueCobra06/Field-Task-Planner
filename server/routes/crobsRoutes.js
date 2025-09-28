@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const CrobsController = require('../controllers/crobsController');
+const pool = require('../config/database');
 
 router.get('/crobsbyName', async (req, res) => {
     try {

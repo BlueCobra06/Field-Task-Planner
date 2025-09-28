@@ -1,47 +1,71 @@
-import React, { useEffect } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React, { useEffect, useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Selection from './pages/Selection';
 import Login from './pages/Login';
+import Register from './pages/Register';
+import Dashboard from './pages/Dashboard';
 import './App.css';
 
 function App() {
-  const [user, setUser] = React.useState(null);
-  const [loading, setLoading] = React.useState(true);
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // const token = localStorage.getItem('token');
-    // const userData = localStorage.getItem('userData');
-    
-    // if (token && userData) {
-    //   setUser(JSON.parse(userData));
-    // }
-    setLoading(false);
+    const token = localStorage.getItem('token');
+    const userData = localStorage.getItem('user');
+
+    if (token && userData) {
+      try {
+        const parsedUser = JSON.parse(userData);
+        setUser(parsedUser);
+      } catch (error) {
+        console.error('Error parsing user data from localStorage:', error);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+      }
+    }
+
+    setIsLoading(false);
   }, []);
 
-  const handleLogin = (userData) => {
+  const handleLogin = (userData, token) => {
     setUser(userData);
+    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('token', token);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('userData');
     setUser(null);
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
   };
 
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-2xl">Loading...</div>
+      </div>
+    );
   }
 
   return (
-    <div className="App bg-gradient-to-br from-purple-600 to-purple-800">
+    <div className="App">
       <main className="container mx-auto px-4 py-8">
-        {user ? (
-          <Routes>
-            <Route path="/" element={<Selection user={user} onLogout={handleLogout} />} />
-          </Routes>
-        ) : (
-          <Login onLoginSuccess={handleLogin} />
-        )}
+        <Routes>
+          {!user ? (
+            <>
+              <Route path="/login" element={<Login onLoginSuccess={handleLogin} />} />
+              <Route path="/register" element={<Register onRegisterSuccess={handleLogin} />} />
+              <Route path="*" element={<Navigate to="/login" replace />} />
+            </>
+          ) : (
+            <>
+              <Route path="/selection" element={<Selection user={user} />} />
+              <Route path="/dashboard" element={<Dashboard user={user} onLogout={handleLogout} />} />
+              <Route path="*" element={<Navigate to="/selection" replace />} />
+            </>
+          )}
+        </Routes>
       </main>
     </div>
   );

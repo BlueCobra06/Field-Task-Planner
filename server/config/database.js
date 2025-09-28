@@ -1,7 +1,5 @@
-const path = require('path');
-const envPath = path.resolve(__dirname, '../config.env');
-require('dotenv').config({path: envPath});
 const { Pool } = require('pg');
+require('dotenv').config({ path: './config.env' });
 
 const pool = new Pool({ 
     user: process.env.DB_USER,
@@ -11,32 +9,21 @@ const pool = new Pool({
     port: process.env.DB_PORT,
 });
 
-pool.on('connect', async (client) => {
-    try {
-        await client.query('SET search_path TO crobs, public');
-        console.log('Search path set to crobs schema');
-    } catch (err) {
-        console.error('Error setting search_path:', err);
-    }
+// Search Path setzen damit "crobs" gefunden wird
+pool.on('connect', (client) => {
+    client.query('SET search_path TO crobs, public');
 });
 
-async function testConnection() {
-    try {
-        const client = await pool.connect();
-        console.log('Database connection successful');
-        
-        const crobs = await client.query('SELECT COUNT(*) FROM crobs');
-        console.log('Table accessible, rows:', crobs.rows[0].count);
+// Debug - zeige die geladene Konfiguration
+console.log('DB Config:', {
+    user: process.env.DB_USER,
+    database: process.env.DB_NAME,
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT
+});
 
-        const user = await client.query('SELECT COUNT(*) FROM user');
-        console.log('Table accessible, rows:', user.rows[0].count);
-        
-        client.release();
-    } catch (err) {
-        console.error('Database connection failed:', err.message);
-    }
-}
-
-testConnection();
+pool.connect()
+    .then(() => console.log('Datenbankverbindung erfolgreich'))
+    .catch(err => console.error('Datenbankverbindung fehlgeschlagen:', err));
 
 module.exports = pool;

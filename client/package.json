@@ -1,6 +1,7 @@
 {
   "name": "field-task-planner-client",
   "version": "1.0.0",
+  "proxy": "http://localhost:5050",
   "private": true,
   "dependencies": {
     "lucide-react": "^0.544.0",

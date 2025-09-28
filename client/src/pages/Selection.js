@@ -1,126 +1,206 @@
-import React from 'react';
-import Dashboard from './Dashboard';
+import React, { useEffect } from 'react';
+import { Check, Search } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 const Selection = () => {
   const [search, setsearch] = React.useState('');
-  const [früchte, setFruits] = React.useState([]);
-  const [allfrüchte, setAllFruits] = React.useState([]);
-  const [selectedFruit, setSelectedFruit] = React.useState(null);
-  const [showDashboard, setShowDashboard] = React.useState(false);
+  const [allfrüchte, setAllfrüchte] = React.useState([]);
+  const [früchte, setFrüchte] = React.useState([]);
+  const [selectedFruitIds, setSelectedFruitIds] = React.useState([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const navigate = useNavigate();
 
-  const fetchFruits = React.useCallback(async () => {
-    try {
-      const response = await fetch(`http://localhost:5000/api/crobs/crobsbyName?name=${search}`);
-      const data = await response.json();
+  useEffect(() => {
+    loadAllCrops();
+    loadUserCrops();
+  }, []);
 
-      if (data.success && Array.isArray(data.data)) {
-        console.log(data.data);
-        setFruits(data.data);
-      }  else {
-          console.log('API returned success: false');
-          setFruits([]);
-      }
-    } catch (error) {
-      console.error('Error-API:', error);
-      setFruits([]);
+  useEffect(() => {
+    if (search.trim()) {
+      searchCrops(search);
+    } else {
+      setFrüchte([]);
     }
   }, [search]);
 
-  React.useEffect(() => {
-    if (search.trim() !== '') {
-      fetchFruits();
-    } else {
-      setFruits([]);
-    }
-  }, [search, fetchFruits]);
-
-  const allfruits = React.useCallback(async () => {
+  const loadAllCrops = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/crobs/allcrobs');
+      const response = await fetch('/api/crobs/allcrobs');
       const data = await response.json();
 
-      if (data.success && Array.isArray(data.data)) {
-        console.log(data.data);
-        setAllFruits(data.data);
-      }  else {
-          console.log('API returned success: false');
-          setAllFruits([]);
+      if (data.success) {
+        setAllfrüchte(data.data);
       }
     } catch (error) {
-      console.error('Error-API:', error);
-      setAllFruits([]);
+      console.error('Fehler beim Laden der Kulturen:', error);
+    } finally {
+      setIsLoading(false);
     }
-  }, []);
+  };
 
-  React.useEffect(() => {
-    allfruits();
-  }, [allfruits]);
+  const loadUserCrops = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/user/crobs', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
 
-  const icons = {
-    "Winterweizen": "🌾",
-    "Roggen": "🌾",
-    "Gerste": "🌾", 
-    "Mais": "🌽",
-    "Kartoffeln": "🥔",
-    "Zuckerrueben": "🫐",
-    "Sonnenblumen": "🌻",
-    "Raps": "🌻",
-    "Hafer": "🌾",
-    "Dinkel": "🌾",
-    "Sojabohnen": "🫘",
-    "Erbsen": "🫛",
-    "Linsen": "🫘",
-    "Klee": "🍀",
-    "Luzerne": "🌿"
+      if (data.success) {
+        const userCropIds = data.data.map(crop => crop.id);
+        setSelectedFruitIds(userCropIds);
+        if (userCropIds.length > 0) {
+          navigate('/dashboard');
+        }
+      }
+    } catch (error) {
+      console.error('Fehler beim Laden der Benutzerkulturen:', error);
+    }
+  }
+
+  const searchCrops = async (query) => {
+    try {
+      const response = await fetch(`/api/crobs/crobsbyName?name=${encodeURIComponent(query)}`);
+      const data = await response.json();
+
+      if (data.success) {
+        setFrüchte(data.data);
+      }
+    } catch (error) {
+      console.error('Fehler bei der Suche nach Kulturen:', error);
+    }
+  };
+
+  const isSelected = (id) => selectedFruitIds.includes(id);
+
+  const toggleFruit = (id) => {
+    setSelectedFruitIds(prevSelected => {
+      if (prevSelected.includes(id)) {
+        return prevSelected.filter(fruitId => fruitId !== id);
+      } else {
+        return [...prevSelected, id];
+      }
+    });
   };
 
   const getIcon = (name) => {
-    return icons[name];
+    const icons = {
+      'Winterweizen': '🌾',
+      'Roggen': '🌾', 
+      'Gerste': '🌾',
+      'Mais': '🌽',
+      'Kartoffeln': '🥔',
+      'Zuckerrueben': '🫐',
+      'Sonnenblumen': '🌻',
+      'Raps': '🌻',
+      'Hafer': '🌾',
+      'Dinkel': '🌾',
+      'Sojabohnen': '🫘',
+      'Erbsen': '🫛',
+      'Linsen': '🫘',
+      'Klee': '🍀',
+      'Luzerne': '🌿',
+      'Apfel': '🍎',
+      'Birne': '🍐',
+      'Kirsche': '🍒',
+      'Pflaume': '🟣',
+      'Erdbeere': '🍓',
+      'Himbeere': '🫐',
+      'Tomate': '🍅',
+      'Kartoffel': '🥔',
+      'Karotte': '🥕',
+      'Weizen': '🌾'
+    };
+
+    return icons[name] || '🌱';
   };
 
-  if (showDashboard && selectedFruit) {
-    return <Dashboard selectedFruit={selectedFruit} />;
+  const saveCrobs = async () => {
+    setIsLoading(true);
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/user/crobs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ selectedFruitIds })
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        navigate('/dashboard');
+      } else {
+        console.error('Fehler beim Speichern der Kulturen:', data.message);
+      }
+    } catch (error) {
+      console.error('Fehler beim Speichern der Kulturen:', error);
+    } finally {
+      setIsLoading(false);
+    }
   }
 
   return (
     <div className="max-w-4xl mx-auto">
       <h1 className="text-black/90 text-3xl mb-3 font-medium text-center ">Welche Kulturen baust du an?</h1>
-      <div className="mb-8">
-        <input type="text"
-                value={search}
-                onChange={(e) => setsearch(e.target.value)}
-                placeholder="Nach Kulturen Suchen"
-                className="w-full px-4 py-3 text-base border-2 border-gray-300 rounded-lg" />
-      </div>
       <div className="max-w-4xl mx-auto backdrop-blur-sm rounded-3xl shadow-2xl p-8 mt-8">
+        <div className="mb-4 relative">
+          <Search className="absolute w-6 h-6 text-gray-400 top-3 left-3"/>
+          <input type="text"
+            value={search}
+            onChange={(e) => setsearch(e.target.value)}
+            placeholder="Nach Kulturen Suchen"
+            className="w-full px-4 py-3 text-base bg-gray-100 rounded-lg pl-12" />
+        </div>
+        {selectedFruitIds.length > 0 && (
+            <div className="relative">
+              <Check className="absolute text-white w-6 h-6 top-2 left-2"/>
+              <button className="pl-10 bg-black text-white p-2 mb-2 rounded-2xl">{selectedFruitIds.length} Kultur ausgewählt</button>
+            </div>
+          )}
         {search && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {früchte.map(frucht => (
-               <div key={frucht.id} className="border-2 border-gray-200 rounded-xl p-6 cursor-pointer">
-                <div className="flex justify-between items-center ">
-                  <h3 className="text-xl font-bold mb-3">{frucht.name}</h3>
-                  <p className="text-xl bg-purple-400 text-white font-bold px-3 py-1 rounded-xl">{frucht.category}</p>
-                </div>
-                <p className="text-gray-600 text-lg">{frucht.planting_time}</p>
+              <div key={frucht.id} className="">
+                <button className={`flex items-center w-full p-4 rounded-xl flex flex-col items-center justify-center relative cursor-pointer hover:bg-gray-200 
+                                 ${isSelected(frucht.id) ? 'bg-black text-white' : 'bg-gray-100 text-black'}`}
+                  onClick={() => toggleFruit(frucht.id)}>
+                  <span className="text-2xl flex-shrink-0">{getIcon(frucht.name)}</span>
+                  {frucht.name}
+                </button>
               </div>
             ))}
           </div>
         )}
-        {allfrüchte.map(frucht => (
-          <div className="bg-white/95 text-center text-2xl font-medium text-black/70 mt-4 p-4
-                          rounded-xl border-2 border-yellow-400/70">
-            <div key={frucht.id} className="text-6xl">{getIcon(frucht.name)}</div>
-            <div key={frucht.id}>{frucht.name}</div>
-            <div key={frucht.id}
-                 className="bg-blue-200 text-blue-600 font-bold px-3 py-1 rounded-xl">{frucht.category}</div>
-            <button onClick={() => setSelectedFruit(frucht)}>Auswählen</button>
-          </div>  
-        ))}
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {!search && (
+          <>
+            {allfrüchte.map(frucht => (
+              <div key={frucht.id} className="">
+                <button className={`flex items-center w-full p-4 rounded-xl flex flex-col items-center justify-center relative cursor-pointer hover:bg-gray-200 
+                                 ${isSelected(frucht.id) ? 'bg-black text-white' : 'bg-gray-100 text-black'}`}
+                  onClick={() => toggleFruit(frucht.id)}>
+                  <span className="text-2xl flex-shrink-0">{getIcon(frucht.name)}</span>
+                  {frucht.name}
+                </button>
+              </div>
+            ))}
+          </>
+        )}
+        </div>
+        {selectedFruitIds.length > 0 && (
+          <div className="flex items-center justify-between mt-2">
+            <button className="bg-gray-100 rounded-2xl whitespace-nowrap px-4 py-2" onClick={() => setSelectedFruitIds([])}>Auswahl zurücksetzen</button>
+            <button 
+              onClick={saveCrobs}
+              disabled={isLoading}
+              className="bg-black text-white font-bold py-2 px-4 rounded-2xl whitespace-nowrap disabled:opacity-50">
+              {isLoading ? 'Speichere...' : `Weiter mit ${selectedFruitIds.length} Kultur`}
+            </button>
+          </div>
+        )}
       </div>
-      {selectedFruit && (
-        <button onClick={() => setShowDashboard(true)}
-                className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-full mt-8">Weiter</button>
-      )}
     </div>
   );
 };

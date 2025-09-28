@@ -1,6 +1,6 @@
-CREATE SCHEMA IF NOT EXISTS Crobs;
+CREATE SCHEMA IF NOT EXISTS crobs;
 
-CREATE TABLE IF NOT EXISTS Crobs.crobs (
+CREATE TABLE IF NOT EXISTS crobs.crobs (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT,
@@ -10,8 +10,7 @@ CREATE TABLE IF NOT EXISTS Crobs.crobs (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-
-INSERT INTO Crobs.crobs (name, description, category, planting_time, harvest_time) VALUES
+INSERT INTO crobs.crobs (name, description, category, planting_time, harvest_time) VALUES
 ('Winterweizen', 'Winterweizen ist eine Getreideart, die im Herbst gesaet wird und im Sommer geerntet wird.', 'Getreide', 'Aussaat Oktober', 'Ernte Juli'),
 ('Roggen', 'Roggen ist ein robustes Getreide, das oft fuer Brot und Tierfutter verwendet wird.', 'Getreide', 'Winterhart und anspruchslos', ''),
 ('Gerste', 'Gerste wird haeufig fuer die Bierherstellung und als Tierfutter angebaut.', 'Getreide', 'Aussaat Maerz-April', 'Ernte Juli-August'),
@@ -28,9 +27,18 @@ INSERT INTO Crobs.crobs (name, description, category, planting_time, harvest_tim
 ('Klee', 'Klee wird oft als Futterpflanze und zur Bodenverbesserung angebaut.', 'Futterpflanze', 'Aussaat April', 'Ernte September'),
 ('Luzerne', 'Luzerne ist eine mehrjaehrige Futterpflanze, die reich an Naehrstoffen ist.', 'Futterpflanze', 'Aussaat Maerz-September', 'Mehrjaehrig');
 
-
-CREATE TABLE IF NOT EXISTS Crobs.user (
+CREATE TABLE IF NOT EXISTS crobs.benutzer (
     id SERIAL PRIMARY KEY,
+    firstname VARCHAR(100) NOT NULL,
+    lastname VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL
-)
+    password_hash VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS crobs.selected (
+    user_id INTEGER NOT NULL,
+    crop_id INTEGER NOT NULL,
+    PRIMARY KEY (user_id, crop_id),
+    FOREIGN KEY (user_id) REFERENCES crobs.benutzer(id) ON DELETE CASCADE,
+    FOREIGN KEY (crop_id) REFERENCES crobs.crobs(id) ON DELETE CASCADE
+);
