@@ -17,7 +17,7 @@ router.post('/register', async (req, res) => {
         }
 
         const existingUser = await pool.query(
-            'SELECT id FROM benutzer WHERE email = $1',
+            'SELECT id FROM crobs.benutzer WHERE email = $1',
             [email]
         );
 
@@ -31,7 +31,7 @@ router.post('/register', async (req, res) => {
         const hashedPassword = await bcrypt.hash(password, 10);
         
         const result = await pool.query(
-            'INSERT INTO benutzer (firstname, lastname, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING id, firstname, lastname, email',
+            'INSERT INTO crobs.benutzer (firstname, lastname, email, password_hash) VALUES ($1, $2, $3, $4) RETURNING id, firstname, lastname, email',
             [firstname, lastname, email, hashedPassword]
         );
 
