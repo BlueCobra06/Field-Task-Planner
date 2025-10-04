@@ -41,4 +41,53 @@ router.get('/crobs', authenticateToken, async (req, res) => {
     }
 });
 
+router.get('/tasks', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const result = await pool.query(
+            `SELECT * FROM tasks WHERE user_id = $1`,
+            [userId]
+        );
+
+        res.json({ success: true, data: result.rows });
+    } catch (error) {
+        console.error('Fehler beim Abrufen der Aufgaben:', error);
+        res.status(500).json({ success: false, message: 'Serverfehler' });
+    }
+});
+
+router.post('/tasks/create', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { text } = req.body;
+        const result = await pool.query('INSERT INTO tasks (user_id, tasks) VALUES ($1, $2) RETURNING *', [userId, text]);
+
+        res.json({ success: true, data: result.rows });
+    } catch (error) {
+        console.error('Fehler beim Erstellen der Aufgabe:', error);
+        res.status(500).json({ success: false, message: 'Serverfehler' });
+    }
+});
+
+router.patch('/tasks/:id', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { id } = req.params;
+        const { completed } = req.body;
+
+        const result = await pool.query(
+            'UPDATE tasks SET completed = $1 WHERE id = $2 AND user_id = $3 RETURNING *', 
+            [completed, id, userId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Aufgabe nicht gefunden' });
+        }   
+
+        res.json({ success: true, data: result.rows });
+    } catch (error) {
+        console.error('Fehler beim Aktualisieren der Aufgabe:', error);
+        res.status(500).json({ success: false, message: 'Serverfehler' });
+    }
+});
+
 module.exports = router;

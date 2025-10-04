@@ -12,7 +12,7 @@ function App() {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    const userData = localStorage.getItem('user');
+    const userData = localStorage.getItem('userData');
 
     if (token && userData) {
       try {
@@ -20,7 +20,7 @@ function App() {
         setUser(parsedUser);
       } catch (error) {
         console.error('Error parsing user data from localStorage:', error);
-        localStorage.removeItem('user');
+        localStorage.removeItem('userData');
         localStorage.removeItem('token');
       }
     }
@@ -30,13 +30,13 @@ function App() {
 
   const handleLogin = (userData, token) => {
     setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    localStorage.setItem('userData', JSON.stringify(userData));
     localStorage.setItem('token', token);
   };
 
   const handleLogout = () => {
     setUser(null);
-    localStorage.removeItem('user');
+    localStorage.removeItem('userData');
     localStorage.removeItem('token');
   };
 

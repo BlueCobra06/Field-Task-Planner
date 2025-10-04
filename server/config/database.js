@@ -9,12 +9,10 @@ const pool = new Pool({
     port: process.env.DB_PORT,
 });
 
-// Search Path setzen damit "crobs" gefunden wird
 pool.on('connect', (client) => {
     client.query('SET search_path TO crobs, public');
 });
 
-// Debug - zeige die geladene Konfiguration
 console.log('DB Config:', {
     user: process.env.DB_USER,
     database: process.env.DB_NAME,

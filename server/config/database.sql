@@ -42,3 +42,11 @@ CREATE TABLE IF NOT EXISTS crobs.selected (
     FOREIGN KEY (user_id) REFERENCES crobs.benutzer(id) ON DELETE CASCADE,
     FOREIGN KEY (crop_id) REFERENCES crobs.crobs(id) ON DELETE CASCADE
 );
+
+CREATE TABLE IF NOT EXISTS crobs.tasks (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    tasks TEXT,
+    completed BOOLEAN DEFAULT false,
+    FOREIGN KEY (user_id) REFERENCES crobs.benutzer(id) ON DELETE CASCADE
+);
