@@ -69,6 +69,22 @@ router.post('/tasks/create', authenticateToken, async (req, res) => {
     }
 });
 
+router.delete('/tasks/delete/:id', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { id } = req.params;
+        const result = await pool.query('DELETE FROM tasks WHERE id = $1 AND user_id = $2 RETURNING *', [id, userId]);
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({ success: false, message: 'Aufgabe nicht gefunden' });
+        }
+
+        res.json({ success: true, data: result.rows });
+    } catch(error) {
+        console.log(error);
+    }
+});
+
 router.patch('/tasks/:id', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.userId;

@@ -15,18 +15,33 @@ function App() {
     const userData = localStorage.getItem('userData');
 
     if (token && userData) {
-      try {
-        const parsedUser = JSON.parse(userData);
-        setUser(parsedUser);
-      } catch (error) {
-        console.error('Error parsing user data from localStorage:', error);
-        localStorage.removeItem('userData');
-        localStorage.removeItem('token');
-      }
+      checktoken(token, userData);
+    } else {
+      setIsLoading(false);
     }
-
-    setIsLoading(false);
   }, []);
+
+  const checktoken = async (token, userData) => {
+    try {
+      const response = await fetch('/api/user/crobs', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        const user = await JSON.parse(userData);
+        setUser(user);
+      } else {
+        handleLogout();
+      }
+    } catch (error) {
+      console.log(error);
+      handleLogout();
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleLogin = (userData, token) => {
     setUser(userData);
