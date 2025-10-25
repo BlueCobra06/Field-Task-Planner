@@ -43,13 +43,13 @@ const Login = ({ onLoginSuccess }) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
-      <div className="bg-white p-8 rounded-xl shadow-xl max-w-md w-full">
-        <div className="mx-auto bg-black rounded-xl p-4 w-16 mb-2">
+      <div className="bg-slate-700 backdrop-blur-lg p-8 rounded-xl shadow-2xl max-w-md w-full">
+        <div className="mx-auto bg-green-500 rounded-xl p-4 w-16 mb-2">
           <Tractor className="w-8 h-8 text-white mx-auto"/>
         </div>
-        <h1 className="text-2xl font-bold mb-2 text-center">Smart Farm Manager</h1>
-        <p className="text-xl text-center mb-6">Digitale Hofverwaltung</p>
-        
+        <h1 className="text-2xl font-bold mb-2 text-center text-white">Smart Farm Manager</h1>
+        <p className="text-xl text-center mb-6 text-white">Digitale Hofverwaltung</p>
+
         {error && (
           <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
             {error}
@@ -57,17 +57,17 @@ const Login = ({ onLoginSuccess }) => {
         )}
         
         <form className="flex flex-col space-y-4" onSubmit={handleLogin}>
-          <label htmlFor="email" className="text-sm font-medium">E-Mail</label>
+          <label htmlFor="email" className="text-sm font-medium text-white">E-Mail</label>
           <input 
             type="email" 
             name="email"
             placeholder="E-Mail" 
             value={formData.email}
             onChange={handleInputChange}
-            className="border border-gray-200 rounded-lg px-4 py-3"
+            className="bg-slate-800 border border-slate-100 rounded-lg px-4 py-3"
             required
           />
-          <label htmlFor="password" className="text-sm font-medium">Passwort</label>
+          <label htmlFor="password" className="text-sm font-medium text-white">Passwort</label>
           <div className="relative">
             <Lock className="absolute left-2 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400 inline-block mr-2" />
             <input 
@@ -76,7 +76,7 @@ const Login = ({ onLoginSuccess }) => {
               placeholder="Passwort" 
               value={formData.password}
               onChange={handleInputChange}
-              className="w-full border border-gray-200 rounded-lg px-4 py-3 pl-10"
+              className="bg-slate-800 w-full border border-slate-200 rounded-lg px-4 py-3 pl-10"
               required
             />
             <button className="absolute right-2 top-1/2 transform -translate-y-1/2" type="button" onClick={() => setShowPassword(!showPassword)}>
@@ -86,12 +86,12 @@ const Login = ({ onLoginSuccess }) => {
           <button 
             type="submit"
             disabled={isLoading}
-            className="px-4 py-2 bg-black text-white rounded-xl text-lg font-semibold disabled:opacity-50"
+            className="px-4 py-2 bg-green-500 text-white rounded-xl text-lg font-semibold disabled:opacity-50"
           >
             {isLoading ? 'Wird geladen...' : 'Login'}
           </button>
-          <div className="text-center text-black/50">
-            Noch kein Konto? <Link to="/register" className="text-black">Jetzt registrieren</Link>
+          <div className="text-center text-white/50">
+            Noch kein Konto? <Link to="/register" className="text-white font-bold">Jetzt registrieren</Link>
           </div>
         </form>
       </div>

@@ -6,7 +6,8 @@ const Aufgaben = () => {
     const [newTask, setNewTask] = useState(false);
     const [taskInput, setTaskInput] = useState('');
     const [tasks, setTasks] = useState([]);
-  
+    const [dueDate, setDueDate] = useState('');
+
     const raw = localStorage.getItem('userData') || '{}';
     let user = {};
     try {
@@ -23,7 +24,7 @@ const Aufgaben = () => {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ text: `${taskInput}` })
+          body: JSON.stringify({ text: `${taskInput}`, dueDate: dueDate })
         });
         const data = await response.json();
         if (data.success) {
@@ -59,6 +60,11 @@ const Aufgaben = () => {
         setNewTask(true);
       }
     }
+
+    const convertDate = (dateString) => {
+      const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+      return new Date(dateString).toLocaleDateString(undefined, options);
+    };
   
     useEffect(() => {
       loadTasks();
@@ -122,49 +128,61 @@ const Aufgaben = () => {
     }
   };
   return (
-    <div className="bg-white p-6 shadow-xl rounded-3xl mt-8">
+    <div className="bg-slate-800 p-6 shadow-xl rounded-3xl mt-8">
         <div className="flex items-center justify-between">
-          <p className="font-bold text-xl">Aktuelle Aufgaben</p>
-          <button className="px-4 py-2 bg-black text-white rounded-2xl flex items-center gap-2"
+          <p className="font-bold text-xl text-white">Aktuelle Aufgaben</p>
+          <button className="px-4 py-2 bg-green-500 text-white rounded-2xl flex items-center gap-2"
                   onClick={taskManager}>
             <Plus className="w-4 h-4" /> Neue Aufgabe
           </button>
         </div>
         <div className="mt-4">
           {newTask && (
-            <div className="fixed inset-0 bg-black  bg-opacity-50 flex items-center justify-center z-50">
-              <div className="bg-white p-6 rounded-2xl shadow-lg w-1/3">
-                <h2 className="text-2xl font-bold mb-4">Neue Aufgabe</h2>
+            <div className="fixed inset-0 bg-slate-800 bg-opacity-50 flex items-center justify-center z-50">
+              <div className="bg-slate-800 p-6 rounded-2xl shadow-lg w-1/3">
+                <h2 className="text-2xl font-bold mb-4 text-white">Neue Aufgabe</h2>
                   <input 
                     type="text"
-                    className="border border-gray-300 p-2 rounded-xl w-full"
+                    className="bg-slate-700 border border-slate-600 p-2 rounded-lg w-full text-white"
                     value={taskInput}
                     onChange={(e) => setTaskInput(e.target.value)}
                     placeholder="Aufgabe eingeben"
                   />
+                  <input 
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="w-full bg-slate-700/50 border border-slate-600 text-white px-4 py-3 rounded-lg mb-4 mt-4"
+                  />
                   <div className="flex flex-row gap-4 mt-4">
                     <button 
-                      className="px-4 py-2 font-bold bg-white border border-gray-300 rounded-xl hover:bg-gray-300 w-full"
+                      className="px-4 py-2 font-bold bg-slate-700 border border-slate-600 rounded-xl hover:bg-slate-600 w-full text-white"
                       onClick={taskManager}>Abbrechen</button>
                     <button 
-                      className="px-4 py-2 font-bold text-white bg-black rounded-xl hover:bg-gray-300 w-full"
+                      className="px-4 py-2 font-bold text-white bg-green-500 rounded-xl hover:bg-green-400 w-full"
                       onClick={handleCreateTask}>Erstellen</button> 
                   </div>
               </div>
             </div>
           )}
           {tasks.map((task) => (
-            <div key={task.id} className="bg-white p-4 rounded-xl shadow-md mb-4">
+            <div key={task.id} className="bg-slate-700 p-4 rounded-xl shadow-md mb-4">
               <div className="flex items-center gap-4">
                 <input type="checkbox" 
                         className="w-5 h-5 rounded cursor-pointer" 
                         checked={task.completed} 
                         onChange={() => handleToggleTask(task.id)} 
                         />
-                <p className="text-gray-600">{task.tasks}</p>
+                <div className="flex flex-col">
+                  <p className="text-white font-bold">{task.tasks}</p>
+                  <div className="flex flex-row gap-4">
+                    <p className="text-gray-400">Fällig am: {convertDate(task.due_date)}</p>
+                    <p className="text-gray-400">Priorität: {task.priority || 'keine'}</p>
+                  </div>
+                </div>
                 <div className="flex justify-between gap-4 ml-auto">
                   <button className="bg-red-500 text-white px-4 py-2 rounded-xl" onClick={() => handleDeleteTask(task.id)}>Löschen</button>
-                </div>
+                </div> 
               </div>
 
             </div>

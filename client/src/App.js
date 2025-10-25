@@ -64,7 +64,7 @@ function App() {
   }
 
   return (
-    <div className="App">
+    <div className="App bg-gradient-to-br from-slate-900 to-slate-800">
       <main className="container mx-auto px-4 py-8">
         <Routes>
           {!user ? (

@@ -32,7 +32,8 @@ CREATE TABLE IF NOT EXISTS crobs.benutzer (
     firstname VARCHAR(100) NOT NULL,
     lastname VARCHAR(100) NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
-    password_hash VARCHAR(255) NOT NULL
+    password_hash VARCHAR(255) NOT NULL,
+    location text
 );
 
 CREATE TABLE IF NOT EXISTS crobs.selected (
@@ -48,5 +49,8 @@ CREATE TABLE IF NOT EXISTS crobs.tasks (
     user_id INTEGER NOT NULL,
     tasks TEXT,
     completed BOOLEAN DEFAULT false,
+    due_date DATE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    priority TEXT,
     FOREIGN KEY (user_id) REFERENCES crobs.benutzer(id) ON DELETE CASCADE
 );

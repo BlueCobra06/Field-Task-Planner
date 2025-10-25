@@ -45,7 +45,15 @@ router.get('/tasks', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.userId;
         const result = await pool.query(
-            `SELECT * FROM tasks WHERE user_id = $1`,
+            `SELECT * FROM tasks WHERE user_id = $1 ORDER by completed ASC, 
+            Case
+                when priority = 'hoch' then 1
+                when priority = 'mittel' then 2
+                when priority = 'niedrig' then 3
+                else 4
+            end ASC,
+            due_date ASC`,
+            
             [userId]
         );
 
@@ -59,8 +67,8 @@ router.get('/tasks', authenticateToken, async (req, res) => {
 router.post('/tasks/create', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.userId;
-        const { text } = req.body;
-        const result = await pool.query('INSERT INTO tasks (user_id, tasks) VALUES ($1, $2) RETURNING *', [userId, text]);
+        const { text, dueDate } = req.body;
+        const result = await pool.query('INSERT INTO tasks (user_id, tasks, due_date) VALUES ($1, $2, $3) RETURNING *', [userId, text, dueDate]);
 
         res.json({ success: true, data: result.rows });
     } catch (error) {
