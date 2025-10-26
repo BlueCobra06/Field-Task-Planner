@@ -116,8 +116,6 @@ const Dashboard = ({ onBack }) => {
       <Kulturen selectedFruits={selectedFruits} loading={loading} />
 
       <Aufgaben />
-
-      <Schnellzugriff  onBack={() => Navigate('/selection')} />
     </div>
   );
 };

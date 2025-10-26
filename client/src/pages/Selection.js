@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Check, Search } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Selection = () => {
   const [search, setsearch] = React.useState('');
@@ -9,6 +9,8 @@ const Selection = () => {
   const [selectedFruitIds, setSelectedFruitIds] = React.useState([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
+  const isFromDashboard = location.state?.fromDashboard || false;
 
   useEffect(() => {
     loadAllCrops();
@@ -49,7 +51,7 @@ const Selection = () => {
       if (data.success) {
         const userCropIds = data.data.map(crop => crop.id);
         setSelectedFruitIds(userCropIds);
-        if (userCropIds.length > 0) {
+        if (userCropIds.length > 0 && !isFromDashboard) {
           navigate('/dashboard');
         }
       }

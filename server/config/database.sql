@@ -54,3 +54,19 @@ CREATE TABLE IF NOT EXISTS crobs.tasks (
     priority TEXT,
     FOREIGN KEY (user_id) REFERENCES crobs.benutzer(id) ON DELETE CASCADE
 );
+
+CREATE TABLE crobs.crop_details (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES crobs.benutzer(id) ON DELETE CASCADE,
+    crop_id INTEGER REFERENCES crobs.crobs(id) ON DELETE CASCADE,
+    flaeche DECIMAL(10,2),
+    standort VARCHAR(255),
+    aussaatdatum DATE,
+    ernteerwartung DATE,
+    bewaesserung VARCHAR(50),
+    duenger TEXT,
+    notizen TEXT,
+    created_at TIMESTAMP DEFAULT NOW(),
+    updated_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(user_id, crop_id)
+);

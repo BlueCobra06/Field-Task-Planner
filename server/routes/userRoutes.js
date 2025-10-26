@@ -23,6 +23,24 @@ router.post('/crobs', authenticateToken, async (req, res) => {
     }
 });
 
+router.post('/crobs/delete', authenticateToken, async (req, res) => {
+    try {
+        const { fruitIdsToDelete } = req.body;
+        const userId = req.user.userId;
+
+        if (fruitIdsToDelete && fruitIdsToDelete.length > 0) {
+            for (const fruitId of fruitIdsToDelete) {
+                await pool.query('DELETE FROM selected WHERE user_id=$1 AND crop_id=$2', [userId, fruitId]);
+            }
+        }
+
+        res.json({ success: true, message: 'Crobs erfolgreich entfernt' });
+    } catch (error) {
+        console.error('Fehler beim Entfernen der Crobs:', error);
+        res.status(500).json({ success: false, message: 'Serverfehler' });
+    }
+});
+
 router.get('/crobs', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.userId;
@@ -37,6 +55,72 @@ router.get('/crobs', authenticateToken, async (req, res) => {
         res.json({ success: true, data: result.rows });
     } catch (error) {
         console.error('Fehler beim Abrufen der Crobs:', error);
+        res.status(500).json({ success: false, message: 'Serverfehler' });
+    }
+});
+
+router.get('/crobs/:cropId/details', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { cropId } = req.params;
+        
+        const result = await pool.query(
+            `SELECT * FROM crop_details WHERE user_id = $1 AND crop_id = $2`,
+            [userId, cropId]
+        );
+
+        res.json({ 
+            success: true, 
+            data: result.rows.length > 0 ? result.rows[0] : null 
+        });
+    } catch (error) {
+        console.error('Fehler beim Abrufen der Details:', error);
+        res.status(500).json({ success: false, message: 'Serverfehler' });
+    }
+});
+
+router.post('/crobs/:cropId/details', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+        const { cropId } = req.params;
+        let { flaeche, standort, aussaatdatum, ernteerwartung, bewaesserung, duenger, notizen } = req.body;
+
+        const toNullIfEmpty = (value) => value === '' || value === undefined ? null : value;
+
+        flaeche = toNullIfEmpty(flaeche);
+        standort = toNullIfEmpty(standort);
+        aussaatdatum = toNullIfEmpty(aussaatdatum);
+        ernteerwartung = toNullIfEmpty(ernteerwartung);
+        bewaesserung = toNullIfEmpty(bewaesserung) || 'normal'; 
+        duenger = toNullIfEmpty(duenger);
+        notizen = toNullIfEmpty(notizen);
+
+        const existing = await pool.query(
+            `SELECT id FROM crop_details WHERE user_id = $1 AND crop_id = $2`,
+            [userId, cropId]
+        );
+
+        if (existing.rows.length > 0) {
+            await pool.query(
+                `UPDATE crop_details 
+                 SET flaeche = $1, standort = $2, aussaatdatum = $3, 
+                     ernteerwartung = $4, bewaesserung = $5, duenger = $6, 
+                     notizen = $7, updated_at = NOW()
+                 WHERE user_id = $8 AND crop_id = $9`,
+                [flaeche, standort, aussaatdatum, ernteerwartung, bewaesserung, duenger, notizen, userId, cropId]
+            );
+        } else {
+            await pool.query(
+                `INSERT INTO crop_details 
+                 (user_id, crop_id, flaeche, standort, aussaatdatum, ernteerwartung, bewaesserung, duenger, notizen)
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+                [userId, cropId, flaeche, standort, aussaatdatum, ernteerwartung, bewaesserung, duenger, notizen]
+            );
+        }
+
+        res.json({ success: true, message: 'Details gespeichert' });
+    } catch (error) {
+        console.error('Fehler beim Speichern der Details:', error);
         res.status(500).json({ success: false, message: 'Serverfehler' });
     }
 });
