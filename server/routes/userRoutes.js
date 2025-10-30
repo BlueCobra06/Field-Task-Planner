@@ -8,15 +8,15 @@ router.post('/crobs', authenticateToken, async (req, res) => {
         const { selectedFruitIds } = req.body;
         const userId = req.user.userId;
 
-        await pool.query('DELETE FROM selected WHERE user_id=$1', [userId]);
+        await pool.query('DELETE FROM crobs.selected WHERE user_id=$1', [userId]);
 
         if (selectedFruitIds && selectedFruitIds.length > 0) {
             for (const fruitId of selectedFruitIds) {
-                await pool.query('INSERT INTO selected (user_id, crop_id) VALUES ($1, $2)', [userId, fruitId]);
+                await pool.query('INSERT INTO crobs.selected (user_id, crop_id) VALUES ($1, $2)', [userId, fruitId]);
             }
         }
 
-        res.json({ success: true, message: 'Crobs erfolgreich zugewiesen' });
+        res.json({ success: true, message: 'Crobs erfolgreich zugewiesen' }); // ✅ KEIN Extra-Text danach!
     } catch (error) {
         console.error('Fehler beim Speichern der Crobs:', error);
         res.status(500).json({ success: false, message: 'Serverfehler' });
@@ -30,7 +30,7 @@ router.post('/crobs/delete', authenticateToken, async (req, res) => {
 
         if (fruitIdsToDelete && fruitIdsToDelete.length > 0) {
             for (const fruitId of fruitIdsToDelete) {
-                await pool.query('DELETE FROM selected WHERE user_id=$1 AND crop_id=$2', [userId, fruitId]);
+                await pool.query('DELETE FROM crobs.selected WHERE user_id=$1 AND crop_id=$2', [userId, fruitId]);
             }
         }
 
@@ -45,9 +45,11 @@ router.get('/crobs', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.userId;
         const result = await pool.query(
-            `SELECT c.* 
-             FROM crobs c
-             JOIN selected s ON c.id = s.crop_id
+            `SELECT c.*, d.flaeche, d.standort, d.aussaatdatum, d.ernteerwartung,
+                    d.bewaesserung, d.duenger, d.notizen
+             FROM crobs.crobs c
+             JOIN crobs.selected s ON c.id = s.crop_id
+             LEFT JOIN crobs.crop_details d ON d.crop_id = c.id AND d.user_id = s.user_id
              WHERE s.user_id = $1`,
             [userId]
         );
@@ -65,7 +67,7 @@ router.get('/crobs/:cropId/details', authenticateToken, async (req, res) => {
         const { cropId } = req.params;
         
         const result = await pool.query(
-            `SELECT * FROM crop_details WHERE user_id = $1 AND crop_id = $2`,
+            `SELECT * FROM crobs.crop_details WHERE user_id = $1 AND crop_id = $2`,
             [userId, cropId]
         );
 
@@ -96,13 +98,13 @@ router.post('/crobs/:cropId/details', authenticateToken, async (req, res) => {
         notizen = toNullIfEmpty(notizen);
 
         const existing = await pool.query(
-            `SELECT id FROM crop_details WHERE user_id = $1 AND crop_id = $2`,
+            `SELECT id FROM crobs.crop_details WHERE user_id = $1 AND crop_id = $2`,
             [userId, cropId]
         );
 
         if (existing.rows.length > 0) {
             await pool.query(
-                `UPDATE crop_details 
+                `UPDATE crobs.crop_details
                  SET flaeche = $1, standort = $2, aussaatdatum = $3, 
                      ernteerwartung = $4, bewaesserung = $5, duenger = $6, 
                      notizen = $7, updated_at = NOW()
@@ -111,7 +113,7 @@ router.post('/crobs/:cropId/details', authenticateToken, async (req, res) => {
             );
         } else {
             await pool.query(
-                `INSERT INTO crop_details 
+                `INSERT INTO crobs.crop_details
                  (user_id, crop_id, flaeche, standort, aussaatdatum, ernteerwartung, bewaesserung, duenger, notizen)
                  VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
                 [userId, cropId, flaeche, standort, aussaatdatum, ernteerwartung, bewaesserung, duenger, notizen]
@@ -129,7 +131,7 @@ router.get('/tasks', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.userId;
         const result = await pool.query(
-            `SELECT * FROM tasks WHERE user_id = $1 ORDER by completed ASC, 
+            `SELECT * FROM crobs.tasks WHERE user_id = $1 ORDER by completed ASC,
             Case
                 when priority = 'hoch' then 1
                 when priority = 'mittel' then 2
@@ -137,7 +139,6 @@ router.get('/tasks', authenticateToken, async (req, res) => {
                 else 4
             end ASC,
             due_date ASC`,
-            
             [userId]
         );
 
@@ -152,7 +153,10 @@ router.post('/tasks/create', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.userId;
         const { text, dueDate } = req.body;
-        const result = await pool.query('INSERT INTO tasks (user_id, tasks, due_date) VALUES ($1, $2, $3) RETURNING *', [userId, text, dueDate]);
+        const result = await pool.query(
+            'INSERT INTO crobs.tasks (user_id, tasks, due_date) VALUES ($1, $2, $3) RETURNING *',
+            [userId, text, dueDate]
+        );
 
         res.json({ success: true, data: result.rows });
     } catch (error) {
@@ -165,7 +169,10 @@ router.delete('/tasks/delete/:id', authenticateToken, async (req, res) => {
     try {
         const userId = req.user.userId;
         const { id } = req.params;
-        const result = await pool.query('DELETE FROM tasks WHERE id = $1 AND user_id = $2 RETURNING *', [id, userId]);
+        const result = await pool.query(
+            'DELETE FROM crobs.tasks WHERE id = $1 AND user_id = $2 RETURNING *',
+            [id, userId]
+        );
 
         if (result.rows.length === 0) {
             return res.status(404).json({ success: false, message: 'Aufgabe nicht gefunden' });
@@ -174,6 +181,7 @@ router.delete('/tasks/delete/:id', authenticateToken, async (req, res) => {
         res.json({ success: true, data: result.rows });
     } catch(error) {
         console.log(error);
+        res.status(500).json({ success: false, message: 'Serverfehler' });
     }
 });
 
@@ -184,8 +192,9 @@ router.patch('/tasks/:id', authenticateToken, async (req, res) => {
         const { completed } = req.body;
 
         const result = await pool.query(
-            'UPDATE tasks SET completed = $1 WHERE id = $2 AND user_id = $3 RETURNING *', 
-            [completed, id, userId]);
+            'UPDATE crobs.tasks SET completed = $1 WHERE id = $2 AND user_id = $3 RETURNING *',
+            [completed, id, userId]
+        );
 
         if (result.rows.length === 0) {
             return res.status(404).json({ success: false, message: 'Aufgabe nicht gefunden' });

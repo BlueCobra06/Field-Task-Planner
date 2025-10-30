@@ -1,20 +1,24 @@
 import React, { useState } from 'react';
-import { Trash2, Eye, X, Save, MapPin, Calendar, Droplets, TrendingUp } from 'lucide-react';
+import { Trash2, Eye, Pencil, X, Save, MapPin, Calendar, Droplets, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const Kulturen = ({ selectedFruits, loading }) => {
+const normalizeDetails = (details = {}) => ({
+    flaeche: details.flaeche || '',
+    standort: details.standort || '',
+    aussaatdatum: details.aussaatdatum || '',
+    ernteerwartung: details.ernteerwartung || '',
+    bewaesserung: details.bewaesserung || 'normal',
+    duenger: details.duenger || '',
+    notizen: details.notizen || ''
+});
+
+const Kulturen = ({ selectedFruits, loading, onDetailsSaved }) => {
     const navigate = useNavigate();
     const [selectedCrop, setSelectedCrop] = useState(null);
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [cropDetails, setCropDetails] = useState({
-        fläche: '',
-        standort: '',
-        aussaatdatum: '',
-        ernteerwartung: '',
-        bewässerung: 'normal',
-        dünger: '',
-        notizen: ''
-    });
+    const [isViewMode, setIsViewMode] = useState(false);
+    const [cropDetailsMap, setCropDetailsMap] = useState({});
+    const [cropDetails, setCropDetails] = useState(normalizeDetails());
     
     const getIcon = (name) => {
         const icons = {
@@ -47,20 +51,51 @@ const Kulturen = ({ selectedFruits, loading }) => {
         return icons[name] || '🌱';
     };
 
-    const handleOpenModal = async (crop) => {
+    const editCrobs = async (crop) => {
         setSelectedCrop(crop);
+        setIsViewMode(false);
         setIsModalOpen(true);
         
-        // Lade existierende Details aus DB
+        const cached = cropDetailsMap[crop.id];
+        setCropDetails(cached ? normalizeDetails(cached) : normalizeDetails());
+        
         try {
             const token = localStorage.getItem('token');
             const response = await fetch(`/api/user/crobs/${crop.id}/details`, {
                 headers: { 'Authorization': `Bearer ${token}` }
             });
             const data = await response.json();
-            
+                        
             if (data.success && data.data) {
-                setCropDetails(data.data);
+                const normalized = normalizeDetails(data.data);
+                setCropDetails(normalized);
+                setCropDetailsMap((prev) => ({ ...prev, [crop.id]: normalized }));
+            } else {
+                setCropDetails(normalizeDetails());
+            }
+        } catch (error) {
+            console.error('Fehler beim Laden der Details:', error);
+        }
+    };
+
+    const showCropDetails = async (crop) => {
+        setSelectedCrop(crop);
+        setIsViewMode(true);
+        setIsModalOpen(true);
+        const cached = cropDetailsMap[crop.id];
+        setCropDetails(cached ? normalizeDetails(cached) : normalizeDetails());
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch(`/api/user/crobs/${crop.id}/details`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data =  await response.json();
+            if (data.success && data.data) {
+                const normalized = normalizeDetails(data.data);
+                setCropDetails(normalized);
+                setCropDetailsMap((prev) => ({ ...prev, [crop.id]: normalized }));
+            } else {
+                setCropDetails(normalizeDetails());
             }
         } catch (error) {
             console.error('Fehler beim Laden der Details:', error);
@@ -70,15 +105,8 @@ const Kulturen = ({ selectedFruits, loading }) => {
     const handleCloseModal = () => {
         setIsModalOpen(false);
         setSelectedCrop(null);
-        setCropDetails({
-            fläche: '',
-            standort: '',
-            aussaatdatum: '',
-            ernteerwartung: '',
-            bewässerung: 'normal',
-            dünger: '',
-            notizen: ''
-        });
+        setIsViewMode(false);
+        setCropDetails(normalizeDetails());
     };
 
     const handleSaveDetails = async () => {
@@ -96,18 +124,23 @@ const Kulturen = ({ selectedFruits, loading }) => {
             const data = await response.json();
 
             if (data.success) {
-                alert('Details erfolgreich gespeichert!');
+                const normalized = normalizeDetails(cropDetails);
+                setCropDetailsMap((prev) => ({
+                    ...prev,
+                    [selectedCrop.id]: normalized
+                }));
+                onDetailsSaved?.();
                 handleCloseModal();
             } else {
-                alert('Fehler beim Speichern');
+                console.error('Fehler beim Speichern der Details:', data.message);
             }
         } catch (error) {
             console.error('Fehler beim Speichern der Details:', error);
-            alert('Fehler beim Speichern');
+    
         }
     };
     
-    const handlecrobsDelete = async (id) => {
+    const handleCropDelete = async (id) => {
         if (!window.confirm('Möchtest du diese Kultur wirklich löschen?')) return;
         
         try {
@@ -126,7 +159,7 @@ const Kulturen = ({ selectedFruits, loading }) => {
             if (data.success) {
                 window.location.reload();
             } else {
-                alert('Fehler beim Löschen');
+                console.error('Fehler beim Löschen der Crobs:', data.message);
             }
         } catch (error) {
             console.error('Fehler beim Entfernen der Crobs:', error);
@@ -147,27 +180,36 @@ const Kulturen = ({ selectedFruits, loading }) => {
                         </button>
                     </div>
                     <div className="grid grid-rows gap-6">
-                        {selectedFruits.map(fruit => (
-                            <div key={fruit.id} className="bg-slate-700 p-6 rounded-xl shadow-lg hover:bg-slate-600 transition-all">
-                                <div className="flex items-center">
-                                    <div className="text-4xl bg-green-500 p-1 rounded-xl">{getIcon(fruit.name)}</div>
-                                    <div className="ml-2">
-                                        <h3 className="text-xl font-bold text-white">{fruit.name}</h3>
-                                        <p className="text-gray-400"> ha</p>
-                                    </div>
-                                    <div className="ml-auto flex items-center gap-4">
-                                        <Eye 
-                                            className="w-6 h-6 cursor-pointer hover:text-blue-400 text-white transition-colors" 
-                                            onClick={() => handleOpenModal(fruit)}
-                                        />
-                                        <Trash2 
-                                            className="w-6 h-6 cursor-pointer hover:text-red-500 text-white transition-colors" 
-                                            onClick={() => handlecrobsDelete(fruit.id)} 
-                                        />
+                        {selectedFruits.map((fruit) => {
+                            const details = cropDetailsMap[fruit.id] || normalizeDetails(fruit);
+                            return (
+                                <div key={fruit.id} className="bg-slate-700 p-6 rounded-xl shadow-lg hover:bg-slate-600 transition-all">
+                                    <div className="flex items-center">
+                                        <div className="text-4xl bg-green-500 p-1 rounded-xl">{getIcon(fruit.name)}</div>
+                                        <div className="ml-2">
+                                            <h3 className="text-xl font-bold text-white">{fruit.name}</h3>
+                                            <p className="text-gray-400">
+                                                {details.flaeche ? `${details.flaeche} ha` : 'ha'}
+                                            </p>
+                                        </div>
+                                        <div className="ml-auto flex items-center gap-4">
+                                            <Eye
+                                                className="w-6 h-6 cursor-pointer hover:text-blue-400 text-white transition-colors"
+                                                onClick={() => showCropDetails(fruit)}
+                                            />
+                                            <Pencil
+                                                className="w-6 h-6 cursor-pointer hover:text-blue-400 text-white transition-colors"
+                                                onClick={() => editCrobs(fruit)}
+                                            />
+                                            <Trash2
+                                                className="w-6 h-6 cursor-pointer hover:text-red-500 text-white transition-colors"
+                                                onClick={() => handleCropDelete(fruit.id)}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                     </div>
                 </div>
             )}
@@ -202,8 +244,9 @@ const Kulturen = ({ selectedFruits, loading }) => {
                                 <input 
                                     type="number"
                                     step="0.1"
-                                    value={cropDetails.fläche}
-                                    onChange={(e) => setCropDetails({...cropDetails, fläche: e.target.value})}
+                                    disabled={isViewMode}
+                                    value={cropDetails.flaeche || ''}
+                                    onChange={(e) => setCropDetails({ ...cropDetails, flaeche: e.target.value })}
                                     className="w-full bg-slate-700 border border-slate-600 text-white px-4 py-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
                                     placeholder="z.B. 5.5"
                                 />
@@ -215,7 +258,8 @@ const Kulturen = ({ selectedFruits, loading }) => {
                                 </label>
                                 <input 
                                     type="text"
-                                    value={cropDetails.standort}
+                                    value={cropDetails.standort || ''}
+                                    disabled={isViewMode}
                                     onChange={(e) => setCropDetails({...cropDetails, standort: e.target.value})}
                                     className="w-full bg-slate-700 border border-slate-600 text-white px-4 py-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
                                     placeholder="z.B. Feld Nord-Ost"
@@ -228,7 +272,8 @@ const Kulturen = ({ selectedFruits, loading }) => {
                                 </label>
                                 <input 
                                     type="date"
-                                    value={cropDetails.aussaatdatum}
+                                    disabled={isViewMode}
+                                    value={cropDetails.aussaatdatum || ''}
                                     onChange={(e) => setCropDetails({...cropDetails, aussaatdatum: e.target.value})}
                                     className="w-full bg-slate-700 border border-slate-600 text-white px-4 py-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
                                 />
@@ -240,7 +285,8 @@ const Kulturen = ({ selectedFruits, loading }) => {
                                 </label>
                                 <input 
                                     type="date"
-                                    value={cropDetails.ernteerwartung}
+                                    disabled={isViewMode}
+                                    value={cropDetails.ernteerwartung || ''}
                                     onChange={(e) => setCropDetails({...cropDetails, ernteerwartung: e.target.value})}
                                     className="w-full bg-slate-700 border border-slate-600 text-white px-4 py-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
                                 />
@@ -251,8 +297,9 @@ const Kulturen = ({ selectedFruits, loading }) => {
                                     Bewässerung
                                 </label>
                                 <select 
-                                    value={cropDetails.bewässerung}
-                                    onChange={(e) => setCropDetails({...cropDetails, bewässerung: e.target.value})}
+                                    value={cropDetails.bewaesserung || 'normal'}
+                                    disabled={isViewMode}
+                                    onChange={(e) => setCropDetails({ ...cropDetails, bewaesserung: e.target.value })}
                                     className="w-full bg-slate-700 border border-slate-600 text-white px-4 py-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
                                 >
                                     <option value="gering">Gering</option>
@@ -267,8 +314,9 @@ const Kulturen = ({ selectedFruits, loading }) => {
                                 </label>
                                 <input 
                                     type="text"
-                                    value={cropDetails.dünger}
-                                    onChange={(e) => setCropDetails({...cropDetails, dünger: e.target.value})}
+                                    value={cropDetails.duenger}
+                                    disabled={isViewMode}
+                                    onChange={(e) => setCropDetails({ ...cropDetails, duenger: e.target.value })}
                                     className="w-full bg-slate-700 border border-slate-600 text-white px-4 py-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none"
                                     placeholder="z.B. NPK 15-15-15, 200kg/ha"
                                 />
@@ -279,6 +327,7 @@ const Kulturen = ({ selectedFruits, loading }) => {
                                 </label>
                                 <textarea 
                                     value={cropDetails.notizen}
+                                    disabled={isViewMode}
                                     onChange={(e) => setCropDetails({...cropDetails, notizen: e.target.value})}
                                     rows="4"
                                     className="w-full bg-slate-700 border border-slate-600 text-white px-4 py-3 rounded-xl focus:ring-2 focus:ring-green-500 outline-none resize-none"
@@ -286,21 +335,32 @@ const Kulturen = ({ selectedFruits, loading }) => {
                                 />
                             </div>
                         </div>
-                        <div className="sticky bottom-0 bg-slate-800 p-6 border-t border-slate-700 flex gap-4">
-                            <button 
-                                onClick={handleCloseModal}
-                                className="flex-1 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all"
-                            >
-                                Abbrechen
-                            </button>
-                            <button 
-                                onClick={handleSaveDetails}
-                                className="flex-1 px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2"
-                            >
-                                <Save className="w-5 h-5" />
-                                Speichern
-                            </button>
-                        </div>
+                        {isViewMode ? (
+                            <div className="sticky bottom-0 bg-slate-800 p-6 border-t border-slate-700 flex gap-4">
+                                <button
+                                    onClick={handleCloseModal}
+                                    className="flex-1 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all"
+                                >
+                                    Schließen
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="sticky bottom-0 bg-slate-800 p-6 border-t border-slate-700 flex gap-4">
+                                <button
+                                    onClick={handleCloseModal}
+                                    className="flex-1 px-6 py-3 bg-slate-700 hover:bg-slate-600 text-white font-bold rounded-xl transition-all"
+                                >
+                                    Abbrechen
+                                </button>
+                                <button
+                                    onClick={handleSaveDetails}
+                                    className="flex-1 px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-xl transition-all flex items-center justify-center gap-2"
+                                >
+                                    <Save className="w-5 h-5" />
+                                    Speichern
+                                </button>
+                            </div>
+                        )}
                     </div>
                 </div>
             )}

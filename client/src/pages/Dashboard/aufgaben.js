@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Check, Trash2 } from 'lucide-react';
 
 const Aufgaben = () => {
     const [loading, setLoading] = useState(true);
@@ -168,11 +168,20 @@ const Aufgaben = () => {
           {tasks.map((task) => (
             <div key={task.id} className="bg-slate-700 p-4 rounded-xl shadow-md mb-4">
               <div className="flex items-center gap-4">
-                <input type="checkbox" 
-                        className="w-5 h-5 rounded cursor-pointer" 
-                        checked={task.completed} 
-                        onChange={() => handleToggleTask(task.id)} 
-                        />
+                <div 
+                  onClick={() => handleToggleTask(task.id)}
+                  className={`
+                    w-6 h-6 rounded-md border-2 flex items-center justify-center cursor-pointer transition-all duration-200
+                    ${task.completed 
+                      ? 'bg-green-500 border-green-500' 
+                      : 'bg-slate-600 border-slate-500 hover:border-green-400'
+                    }
+                  `}
+                >
+                  {task.completed && (
+                    <Check className="w-4 h-4 text-white" strokeWidth={3} />
+                  )}
+                </div>
                 <div className="flex flex-col">
                   <p className="text-white font-bold">{task.tasks}</p>
                   <div className="flex flex-row gap-4">
@@ -181,7 +190,9 @@ const Aufgaben = () => {
                   </div>
                 </div>
                 <div className="flex justify-between gap-4 ml-auto">
-                  <button className="bg-red-500 text-white px-4 py-2 rounded-xl" onClick={() => handleDeleteTask(task.id)}>Löschen</button>
+                  <Trash2 className="w-6 h-6 cursor-pointer hover:text-red-500 text-white transition-colors" 
+                          onClick={() => handleTaskDelete(task.id)} 
+                  />
                 </div> 
               </div>
 

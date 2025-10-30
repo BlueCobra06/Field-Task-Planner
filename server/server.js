@@ -21,7 +21,7 @@ app.use('/api/user', userRoutes);
 app.use('/api/wetter', wetterRoutes);
 
 app.listen(port, () => {
-    console.log(`Server läuft auf: https://localhost:${port}`);
+    console.log(`Server läuft auf: http://localhost:${port}`);
 });
 
 module.exports = app;

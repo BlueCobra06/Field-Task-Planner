@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { Settings, Tractor, LogOut, Bell, Trash2, Eye, Edit, Plus, MapPin, Calendar, BarChart3 } from 'lucide-react';
 import { Aufgaben } from './Dashboard/aufgaben';
 import { Kulturen } from './Dashboard/kulturen';
@@ -20,52 +20,66 @@ const Dashboard = ({ onBack }) => {
     const [selectedFruits, setSelectedFruits] = useState([]);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        const loadUserCrobs = async () => {
-            try {
-                const token = localStorage.getItem('token');
-                const response = await fetch('/api/user/crobs', {
-                    headers: { 'Authorization': `Bearer ${token}` }
-                });
-                const data = await response.json();
-                if (data.success) {
-                    setSelectedFruits(data.data);
-                }
-            } catch (error) {
-                console.error('Fehler beim Laden der Kulturen:', error);
-            } finally {
-                setLoading(false);
+    const loadUserCrobs = useCallback(async () => {
+        setLoading(true);
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/user/crobs', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (data.success) {
+                setSelectedFruits(data.data);
             }
-        };
-        loadUserCrobs();
-        aufgabenload();
-        console.log('Tasks:', tasks);
+        } catch (error) {
+            console.error('Fehler beim Laden der Kulturen:', error);
+        } finally {
+            setLoading(false);
+        }
     }, []);
 
-    const gesamtfläche = () => {
-      let result = 0;
-      selectedFruits.forEach(fruit => {
-        result += fruit.id;
-      });
-
-      return result;
-    }
-
-    const aufgabenload = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const response = await fetch(`/api/user/tasks/`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const data = await response.json();
-        if (data.success) {
-          setTasks(data.data);
-          setLoading(false);
+    const aufgabenload = useCallback(async () => {
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/user/tasks/', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await response.json();
+            if (data.success) {
+                setTasks(data.data);
+            }
+        } catch (error) {
+            console.error('Fehler beim Laden der Aufgaben:', error);
         }
-      } catch (error) {
-        console.error('Fehler beim Laden der Aufgaben:', error);
-      }
-    }
+    }, []);
+
+    useEffect(() => {
+        loadUserCrobs();
+        aufgabenload();
+    }, [loadUserCrobs, aufgabenload]);
+
+    const gesamtfläche = useMemo(
+        () =>
+            selectedFruits.reduce((sum, fruit) => {
+                const value = parseFloat(fruit.flaeche);
+                return sum + (Number.isFinite(value) ? value : 0);
+            }, 0),
+        [selectedFruits]
+    );
+
+    const nextHarvestLabel = useMemo(() => {
+        const dates = selectedFruits
+            .map((fruit) => {
+                if (!fruit.ernteerwartung) return null;
+                const date = new Date(fruit.ernteerwartung);
+                return Number.isNaN(date.valueOf()) ? null : date;
+            })
+            .filter(Boolean)
+            .sort((a, b) => a - b);
+        if (!dates.length) return '–';
+        return new Intl.DateTimeFormat('de-DE', { dateStyle: 'medium' }).format(dates[0]);
+    }, [selectedFruits]);
+
   return (
     <div className="min-h-screen p-8 ">
       <div className="flex items-center gap-4 shadow-xl p-4 rounded-2xl bg-slate-800">
@@ -75,11 +89,9 @@ const Dashboard = ({ onBack }) => {
           <p className="text-lg text-white">Smart Farm Manager Dashboard</p>
         </div>
         <div className="ml-auto flex items-center gap-4 text-white">
-          <Bell className="cursor-pointer hover:text-slate-600 text-white" />
-          <Settings className="cursor-pointer hover:text-slate-600 text-white" />
-          <LogOut 
-            className="cursor-pointer hover:text-slate-600 text-white" 
-            onClick={() => { 
+          <LogOut
+            className="cursor-pointer hover:text-slate-600 text-white"
+            onClick={() => {
               localStorage.removeItem('token');
               localStorage.removeItem('userData');
               window.location.href = '/login'; 
@@ -93,7 +105,9 @@ const Dashboard = ({ onBack }) => {
           <div className="space-y-4">
             <div className="flex justify-between items-center pb-4 border-b border-slate-700">
                <span className="text-slate-400">Gesamtfläche</span>
-      <span className="text-xl font-bold text-emerald-500">{gesamtfläche()} ha</span>
+      <span className="text-xl font-bold text-emerald-500">
+                   {gesamtfläche.toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 2 })} ha
+               </span>
             </div>
             <div>
               <div className="flex justify-between items-center pb-4 border-b border-slate-700">
@@ -106,14 +120,14 @@ const Dashboard = ({ onBack }) => {
               </div>
               <div className="flex justify-between items-center pb-4 border-b border-slate-700">
                 <span className="text-slate-400">Nächste Ernte</span>
-                <span className="text-xl font-bold text-emerald-500">In Kürze</span>
+                <span className="text-xl font-bold text-emerald-500">{nextHarvestLabel}</span>
               </div>
             </div>
           </div>
         </div>
         <Wetter/>
       </div>
-      <Kulturen selectedFruits={selectedFruits} loading={loading} />
+      <Kulturen selectedFruits={selectedFruits} loading={loading} onDetailsSaved={loadUserCrobs} />
 
       <Aufgaben />
     </div>
