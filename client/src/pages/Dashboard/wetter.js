@@ -178,7 +178,8 @@ const Wetter = () => {
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-slate-600">
               <p className="font-bold text-lg text-white">📅 7-Tage Vorhersage</p>
             </div>
-            <div className="mt-2 grid grid-cols-1 gap-3">
+            <div className="mt-2 space-y-1 grid grid-cols-1 overflow-y-auto pr-1 gap-2 custom-scrollbar"
+                 style={{ maxHeight: '9.5rem' }}>
               {forecast.map((day, index) => (
                 <div key={index} className="flex flex-row items-center justify-between bg-slate-700 p-4 rounded-xl hover:bg-slate-600 transition-all">
                   <p className="text-xl text-gray-400 min-w-[120px]">{getWochentag(day.date)}</p>

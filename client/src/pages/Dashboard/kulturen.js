@@ -184,8 +184,8 @@ const Kulturen = ({ selectedFruits, loading, onDetailsSaved }) => {
                             const details = cropDetailsMap[fruit.id] || normalizeDetails(fruit);
                             return (
                                 <div key={fruit.id} className="bg-slate-700 p-6 rounded-xl shadow-lg hover:bg-slate-600 transition-all">
-                                    <div className="flex items-center">
-                                        <div className="text-4xl bg-green-500 p-1 rounded-xl">{getIcon(fruit.name)}</div>
+                                    <div className="flex items-center justify-center">
+                                        <div className="text-4xl bg-green-500 p-1 rounded-xl h-12 w-12 flex items-center justify-center">{getIcon(fruit.name)}</div>
                                         <div className="ml-2">
                                             <h3 className="text-xl font-bold text-white">{fruit.name}</h3>
                                             <p className="text-gray-400">

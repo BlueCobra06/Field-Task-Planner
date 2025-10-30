@@ -64,13 +64,13 @@ const Register = ({ onRegisterSuccess }) => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen">
-      <div className="bg-white p-8 rounded-2xl shadow-xl max-w-md w-full">
-        <div className="mx-auto bg-black rounded-xl p-4 w-16 mb-2">
+      <div className="bg-slate-700 backdrop-blur-lg p-8 rounded-2xl shadow-2xl max-w-md w-full">
+        <div className="mx-auto bg-green-500 rounded-xl p-4 w-16 mb-2">
           <Tractor className="w-8 h-8 text-white mx-auto"/>
         </div>
-        <h1 className="text-2xl font-bold mb-2 text-center">Konto erstellen</h1>
-        <p className="text-lg text-center mb-6">Registriere dich für die Smart Farm Manager</p>
-        
+        <h1 className="text-2xl font-bold mb-2 text-center text-white">Konto erstellen</h1>
+        <p className="text-lg text-center mb-6 text-white">Registriere dich für die Smart Farm Manager</p>
+
         {error && (
           <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
             {error}
@@ -80,7 +80,7 @@ const Register = ({ onRegisterSuccess }) => {
         <form className="flex flex-col space-y-4" onSubmit={handleRegister}>
             <div className="grid grid-cols-2 grid-rows-1 gap-4">
                 <div>
-                    <label className="text-sm font-medium">Vorname</label>
+                    <label className="text-sm font-medium text-white">Vorname</label>
                     <div className="relative">
                         <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"/>
                         <input
@@ -89,12 +89,12 @@ const Register = ({ onRegisterSuccess }) => {
                             value={formData.firstName}
                             onChange={handleInputChange}
                             required
-                            className="bg-gray-100 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black w-full pl-10"
+                            className="bg-slate-800 w-full border border-slate-200 rounded-lg px-4 py-3 pl-10 text-white"
                         />
                     </div>
                 </div>
                 <div>
-                    <label className="text-sm font-medium">Nachname</label>
+                    <label className="text-sm font-medium text-white">Nachname</label>
                     <div className="relative">
                         <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"/>
                         <input
@@ -103,12 +103,12 @@ const Register = ({ onRegisterSuccess }) => {
                             value={formData.lastName || ''}
                             onChange={handleInputChange}
                             required
-                            className="bg-gray-100 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black w-full pl-10"
+                            className="bg-slate-800 w-full border border-slate-200 rounded-lg px-4 py-3 pl-10 text-white"
                         />
                     </div>
                 </div>
             </div>
-            <label className="text-sm font-medium">E-Mail</label>
+            <label className="text-sm font-medium text-white">E-Mail</label>
             <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"/>
                 <input
@@ -117,10 +117,10 @@ const Register = ({ onRegisterSuccess }) => {
                     value={formData.email || ''}
                     onChange={handleInputChange}
                     required
-                    className="w-full bg-gray-100 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black pl-10"
-                />
+                      className="bg-slate-800 w-full border border-slate-200 rounded-lg px-4 py-3 pl-10 text-white"
+                  />
             </div>
-            <label className="text-sm font-medium">Passwort</label>
+            <label className="text-sm font-medium text-white">Passwort</label>
             <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"/>
                 <input
@@ -129,7 +129,7 @@ const Register = ({ onRegisterSuccess }) => {
                     value={formData.password || ''}
                     onChange={handleInputChange}
                     required
-                    className="w-full bg-gray-100 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black pl-10"
+                    className="bg-slate-800 w-full border border-slate-200 rounded-lg px-4 py-3 pl-10 text-white"
                 />
                 <button
                     type="button"
@@ -139,7 +139,7 @@ const Register = ({ onRegisterSuccess }) => {
                 {showPassword ? <EyeOff className="w-5 h-5 text-gray-400"/> : <Eye className="w-5 h-5 text-gray-400"/>}
                 </button>
             </div>
-            <label className="text-sm font-medium">Passwort bestätigen</label>
+            <label className="text-sm font-medium text-white">Passwort bestätigen</label>
             <div className="relative">
                 <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"/>
                 <input
@@ -148,7 +148,7 @@ const Register = ({ onRegisterSuccess }) => {
                     value={formData.confirmPassword || ''}
                     onChange={handleInputChange}
                     required
-                    className="w-full bg-gray-100 rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black pl-10"
+                    className="bg-slate-800 w-full border border-slate-200 rounded-lg px-4 py-3 pl-10 text-white"
                 />
                 
                 <button
@@ -162,12 +162,12 @@ const Register = ({ onRegisterSuccess }) => {
             <button
               type="submit" 
               disabled={isLoading}
-              className="px-4 py-2 bg-black text-white rounded-xl text-lg font-semibold disabled:opacity-50"
+              className="px-4 py-2 bg-green-500 text-white rounded-xl text-lg font-semibold disabled:opacity-50"
             >
               {isLoading ? 'Wird erstellt...' : 'Konto erstellen'}
             </button>
-            <div className="text-center text-black/50">
-              Bereits ein Konto? <Link to="/login" className="text-black">Anmelden</Link>
+            <div className="text-center text-white/50">
+              Bereits ein Konto? <Link to="/login" className="text-white">Anmelden</Link>
             </div>
         </form>
       </div>
